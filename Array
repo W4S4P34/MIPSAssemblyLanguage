@@ -1,0 +1,154 @@
+.data
+	# Statements
+	MenuTitle:	.asciiz "Function Menu:\n"
+	Function1:	.asciiz "1. Print out all elements.\n"
+	Function2:	.asciiz "2. Sum all elements.\n"
+	Function3:	.asciiz "3. List all prime elements.\n"
+	Function4:	.asciiz "4. Find max.\n"
+	Function5:	.asciiz "5. Find input element.\n"
+	Function6:	.asciiz "6. Exit.\n"
+	
+	Selection:	.asciiz "Select: "
+
+	Reset:		.asciiz "Continue? (1/2) 1. Yes, 2. No\n"
+
+	OutOfRange:	.asciiz "Out of range! Select again!\n"
+	ExitAnnounce:	.asciiz "Exit Sucessfully!"
+
+	# Escape Sequence
+	CR:	.asciiz "\n"
+	space:	.asciiz " "
+.text
+	.globl main
+
+main:
+	jal 	showMenu
+	jal 	selectFunction
+
+	j	exit
+
+#*********************************************************#
+showMenu:
+	la	$a0, MenuTitle		# Show menu title
+	li	$v0, 4			# Load $v0 with 4 to print string
+	syscall
+
+	la	$a0, Function1		# Show functions
+	li	$v0, 4			# Load $v0 with 4 to print string
+	syscall
+
+	la	$a0, Function2		# Show functions
+	li	$v0, 4			# Load $v0 with 4 to print string
+	syscall
+	
+	la	$a0, Function3		# Show functions
+	li	$v0, 4			# Load $v0 with 4 to print string
+	syscall
+
+	la	$a0, Function4		# Show functions
+	li	$v0, 4			# Load $v0 with 4 to print string
+	syscall
+
+	la	$a0, Function5		# Show functions
+	li	$v0, 4			# Load $v0 with 4 to print string
+	syscall
+
+	la	$a0, Function6		# Show functions
+	li	$v0, 4			# Load $v0 with 4 to print string
+	syscall
+
+	jr	$ra			# Return to main
+
+
+selectFunction:
+	la	$a0, Selection		# Show selection title
+	li	$v0, 4			# Load $v0 with 4 to print string
+	syscall
+
+	li	$v0, 5
+	syscall
+
+	move	$t0, $v0
+
+	bgt 	$t0, 6, outRange
+	blt 	$t0, 1, outRange
+
+	#**********************#
+	beq	$t0, 1, selectF1
+
+	#**********************#
+	beq	$t0, 2, selectF2
+
+	#**********************#
+	beq	$t0, 3, selectF3
+	
+	#**********************#
+	beq	$t0, 4, selectF4
+
+	#**********************#
+	beq	$t0, 5, selectF5
+
+	jr	$ra
+
+
+selectF1:
+
+	j 	reset
+
+
+selectF2:
+
+	j 	reset
+
+
+selectF3:
+
+	j 	reset
+
+
+selectF4:
+
+	j 	reset
+
+
+selectF5:
+
+	j 	reset
+
+
+outRange:
+	la	$a0, OutOfRange
+	li	$v0, 4
+	syscall
+
+	j	reset
+
+
+reset:
+	la	$a0, Reset		# Reset question
+	li	$v0, 4			# Load $v0 with 4 to print string
+	syscall
+
+	la	$a0, Selection		# Show selection title
+	li	$v0, 4			# Load $v0 with 4 to print string
+	syscall
+
+	li	$v0, 5
+	syscall
+
+	move 	$t0, $v0
+
+	bgt 	$t0, 2, outRange
+	blt 	$t0, 1, outRange
+
+	beq	$t0, 1, main
+	beq	$t0, 2, exit
+
+
+exit:
+	la	$a0, ExitAnnounce	# Announce the exit state
+	li	$v0, 4			# Load $v0 with 4 to print string
+	syscall
+
+	li 	$v0, 10			# Load $v0 with 10 to exit
+	syscall
