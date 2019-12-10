@@ -1,5 +1,8 @@
 .data
 	# Statements
+	ArrayInput:	.asciiz "Number of elements (0 < n <= 1000): "
+	ArrayTraversal:	.asciiz "Element no."	
+
 	MenuTitle:	.asciiz "Function Menu:\n"
 	Function1:	.asciiz "1. Print out all elements.\n"
 	Function2:	.asciiz "2. Sum all elements.\n"
@@ -8,6 +11,8 @@
 	Function5:	.asciiz "5. Find input element.\n"
 	Function6:	.asciiz "6. Exit.\n"
 	
+	Result:		.asciiz "Result: "
+
 	Selection:	.asciiz "Select: "
 
 	Reset:		.asciiz "Continue? (1/2) 1. Yes, 2. No\n"
@@ -16,16 +21,84 @@
 	ExitAnnounce:	.asciiz "Exit Sucessfully!"
 
 	# Escape Sequence
-	CR:	.asciiz "\n"
-	space:	.asciiz " "
+	CR:		.asciiz "\n"
+	Spacebar:	.asciiz " "
+	Colon:		.asciiz ": "
+
 .text
 	.globl main
 
 main:
+	la	$a0, ArrayInput		# Input number of elements
+	li	$v0, 4
+	syscall
+
+	li	$v0, 5
+	syscall
+
+	move	$t0, $v0
+
+	bgt 	$t0, 1000, outRange	# If n <= 0 or n > 1000, announce then reset
+	blt 	$t0, 1, outRange
+
+	move	$s0, $t0		# $s0 contains n
+
+	li	$t1, 4
+
+	mult	$t0, $t1
+	mflo	$t0
+
+	move	$s1, $t0		# $s1 contains n x 4 byte
+
+	li	$t1, -1
+
+	mult	$t0, $t1
+	mflo	$t0
+
+	add	$sp, $sp, $t0		# Declare array with n elements, each has 4 byte
+
+	#**********************#
+	jal 	initArray
+
+	#**********************#
 	jal 	showMenu
+
+	#**********************#
 	jal 	selectFunction
 
 	j	exit
+
+#*********************************************************#
+initArray:
+	li	$t0, 0			# $t0 contains index of array
+	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack
+
+	j	LoopInitArray
+
+LoopInitArray:
+	li	$v0, 4
+	la	$a0, ArrayTraversal
+	syscall
+
+	li	$v0, 1
+	add	$a0, $0, $t0
+	syscall
+
+	li	$v0, 4
+	la	$a0, Colon
+	syscall
+
+	li	$v0, 5
+	syscall
+
+	sw	$v0, ($t1)
+	
+	addi	$t1, $t1, 4
+	addi	$t0, $t0, 1
+
+	bne	$t0, $s0, LoopInitArray
+	jr	$ra
+	
 
 #*********************************************************#
 showMenu:
@@ -91,31 +164,161 @@ selectFunction:
 	jr	$ra
 
 
+#*********************************************************#
 selectF1:
+	li	$t0, 0			# $t0 contains index of array
+	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack
 
+	li	$v0, 4
+	la	$a0, Result
+	syscall	
+
+	j	LoopF1
+
+LoopF1:
+	li	$v0, 1
+	lw	$a0, ($t1)
+	syscall
+
+	li	$v0, 4
+	la	$a0, Spacebar
+	syscall
+
+	addi	$t1, $t1, 4
+	addi	$t0, $t0, 1
+
+	bne	$t0, $s0, LoopF1	
+
+	li	$v0, 4
+	la	$a0, CR
+	syscall
+	
 	j 	reset
 
 
+#*********************************************************#
 selectF2:
+	li	$t0, 0			# $t0 contains index of array
+	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack
 
+	li	$v0, 4
+	la	$a0, Result
+	syscall	
+
+	li	$a0, 0			# Sum of elements variable
+
+	j	LoopF2
+
+LoopF2:
+	lw	$t2, ($t1)		# Get current element
+	add	$a0, $a0, $t2
+
+	addi	$t1, $t1, 4
+	addi	$t0, $t0, 1
+
+	bne	$t0, $s0, LoopF2
+
+	li	$v0, 1
+	syscall
+
+	li	$v0, 4
+	la	$a0, CR
+	syscall
+	
 	j 	reset
 
 
+#*********************************************************#
 selectF3:
+	li	$t0, 0			# $t0 contains index of array
+	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack
 
+	li	$v0, 4
+	la	$a0, Result
+	syscall	
+
+	j	LoopF3
+
+LoopF3:
+	
+
+	addi	$t1, $t1, 4
+	addi	$t0, $t0, 1
+
+	bne	$t0, $s0, LoopF3	
+
+	li	$v0, 4
+	la	$a0, CR
+	syscall
+	
 	j 	reset
 
 
+#*********************************************************#
 selectF4:
+	li	$t0, 0			# $t0 contains index of array
+	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack
 
+	li	$v0, 4
+	la	$a0, Result
+	syscall	
+
+	li	$a0, 0			# Max variable
+
+	j	LoopF4
+
+LoopF4:
+	lw	$t2, ($t1)		# Get current element
+
+	sgt	$t3, $t2, $a0
+	bne	$t3, 1, AssignMaxElse
+
+AssignMax:
+	add	$a0, $0, $t2
+
+AssignMaxElse:
+	addi	$t1, $t1, 4
+	addi	$t0, $t0, 1
+
+	bne	$t0, $s0, LoopF4	
+
+	li	$v0, 1
+	syscall
+
+	li	$v0, 4
+	la	$a0, CR
+	syscall
+	
 	j 	reset
 
 
+#*********************************************************#
 selectF5:
+	li	$t0, 0			# $t0 contains index of array
+	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack
 
+	li	$v0, 4
+	la	$a0, Result
+	syscall	
+
+	j	LoopF5
+
+LoopF5:
+	
+
+	addi	$t1, $t1, 4
+	addi	$t0, $t0, 1
+
+	bne	$t0, $s0, LoopF5	
+
+	li	$v0, 4
+	la	$a0, CR
+	syscall
+	
 	j 	reset
 
 
+#*********************************************************#
 outRange:
 	la	$a0, OutOfRange
 	li	$v0, 4
@@ -146,6 +349,8 @@ reset:
 
 
 exit:
+	add	$sp, $sp, $s1		# Free array
+
 	la	$a0, ExitAnnounce	# Announce the exit state
 	li	$v0, 4			# Load $v0 with 4 to print string
 	syscall
