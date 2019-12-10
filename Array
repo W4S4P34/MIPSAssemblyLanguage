@@ -88,10 +88,10 @@ LoopInitArray:
 	la	$a0, Colon
 	syscall
 
-	li	$v0, 5
+	li	$v0, 5			# Input each element
 	syscall
 
-	sw	$v0, ($t1)
+	sw	$v0, ($t1)		# Store value into stack array
 	
 	addi	$t1, $t1, 4
 	addi	$t0, $t0, 1
@@ -205,18 +205,11 @@ selectF2:
 	la	$a0, Result
 	syscall	
 
-	li	$a0, 0			# Sum of elements variable
+	li	$t2, 0			# Sum of elements variable
 
-	j	LoopF2
-
-LoopF2:
-	lw	$t2, ($t1)		# Get current element
-	add	$a0, $a0, $t2
-
-	addi	$t1, $t1, 4
-	addi	$t0, $t0, 1
-
-	bne	$t0, $s0, LoopF2
+	jal	LoopF2
+	
+	move  	$a0, $v0		# Set the sum value to $a0: argument of $v0 = 1, print integer
 
 	li	$v0, 1
 	syscall
@@ -224,8 +217,21 @@ LoopF2:
 	li	$v0, 4
 	la	$a0, CR
 	syscall
-	
+
 	j 	reset
+
+LoopF2:
+	lw	$t3, ($t1)		# Get current element and store in $t3
+	add	$t2, $t2, $t3
+
+	addi	$t1, $t1, 4
+	addi	$t0, $t0, 1
+
+	bne	$t0, $s0, LoopF2
+
+	move	$v0, $t2		# Return the sum value through $v0
+	
+	jr 	$ra
 
 
 #*********************************************************#
@@ -263,24 +269,11 @@ selectF4:
 	la	$a0, Result
 	syscall	
 
-	li	$a0, 0			# Max variable
+	lw	$a0, 0($sp)		# Max variable is the first element
 
-	j	LoopF4
+	jal	LoopF4
 
-LoopF4:
-	lw	$t2, ($t1)		# Get current element
-
-	sgt	$t3, $t2, $a0
-	bne	$t3, 1, AssignMaxElse
-
-AssignMax:
-	add	$a0, $0, $t2
-
-AssignMaxElse:
-	addi	$t1, $t1, 4
-	addi	$t0, $t0, 1
-
-	bne	$t0, $s0, LoopF4	
+	move	$a0, $v0
 
 	li	$v0, 1
 	syscall
@@ -288,8 +281,27 @@ AssignMaxElse:
 	li	$v0, 4
 	la	$a0, CR
 	syscall
+
+	j	reset
+
+LoopF4:
+	lw	$t2, ($t1)		# Get current element and store to $t2
+
+	sgt	$t3, $t2, $a0
+	bne	$t3, 1, NotAssignMax
+
+AssignMax:
+	add	$a0, $0, $t2
+
+NotAssignMax:
+	addi	$t1, $t1, 4
+	addi	$t0, $t0, 1
+
+	bne	$t0, $s0, LoopF4
+
+	move	$v0, $a0	
 	
-	j 	reset
+	jr 	$ra
 
 
 #*********************************************************#
