@@ -4,16 +4,15 @@
 	ArrayTraversal:	.asciiz "Element no."	
 
 	MenuTitle:	.asciiz "Function Menu:\n"
-	Function1:	.asciiz "1. Print out all elements.\n"	#void Print()
-	Function2:	.asciiz "2. Sum all elements.\n"	#int Sum()
-	Function3:	.asciiz "3. List all prime elements.\n"	#e
+	Function1:	.asciiz "1. Print out all elements.\n"
+	Function2:	.asciiz "2. Sum all elements.\n"
+	Function3:	.asciiz "3. List all prime elements.\n"
 	Function4:	.asciiz "4. Find max.\n"
 	Function5:	.asciiz "5. Find input element.\n"
-	InputNumber:	.asciiz "Please input number to find its index: "
-	
-
 	Function6:	.asciiz "6. Exit.\n"
 	
+	InputNumber:	.asciiz "Please input a number to find its index: "
+
 	Result:		.asciiz "Result: "
 
 	Selection:	.asciiz "Select: "
@@ -29,7 +28,7 @@
 	Colon:		.asciiz ": "
 
 .text
-	.globl main
+	.globl 	main
 
 main:
 	la	$a0, ArrayInput		# Input number of elements
@@ -170,7 +169,7 @@ selectFunction:
 
 #*********************************************************#
 selectF1:
-	li	$t0, 0			# int i = 0
+	li	$t0, 0	
 	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack
 
 	li	$v0, 4
@@ -180,18 +179,18 @@ selectF1:
 	j	LoopF1
 
 LoopF1:
-	li	$v0, 1			# Print integer :>
-	lw	$a0, ($t1)		# It used to be a 0 in front of the "($t1)", but this guy don't want to so it now dissappear :< 
+	li	$v0, 1			# Print integer
+	lw	$a0, ($t1) 
 	syscall
 
 	li	$v0, 4
 	la	$a0, Spacebar
 	syscall
 
-	addi	$t1, $t1, 4		# Point to the next element - IELTS 9.0 said :D
-	addi	$t0, $t0, 1		# i++
+	addi	$t1, $t1, 4		# Point to the next element
+	addi	$t0, $t0, 1
 
-	bne	$t0, $s0, LoopF1	# i < n
+	bne	$t0, $s0, LoopF1
 
 	li	$v0, 4
 	la	$a0, CR
@@ -202,16 +201,16 @@ LoopF1:
 
 #*********************************************************#
 selectF2:
-	li	$t0, 0			# $t0 contains index of array ( int i  = 0 )
-	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack ( t1 = a[0] )
+	li	$t0, 0			# $t0 contains index of array
+	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack
 
 	li	$v0, 4
 	la	$a0, Result
 	syscall	
 
-	li	$t2, 0			# Sum of elements variable ( int sum = 0 )
+	li	$t2, 0			# Sum of elements variable
 
-	jal	LoopF2			# Sum(array[] n)
+	jal	LoopF2	
 	
 	move  	$a0, $v0		# Set the sum value to $a0: argument of $v0 = 1, print integer
 
@@ -225,15 +224,15 @@ selectF2:
 	j 	reset
 
 LoopF2:
-	lw	$t3, ($t1)		# Get current element and store in $t3  (t3 =  a[i])
-	add	$t2, $t2, $t3		# sum = sum + a[i]
+	lw	$t3, ($t1)		# Get current element and store in $t3
+	add	$t2, $t2, $t3		# Sum elements' values
 
 	addi	$t1, $t1, 4
 	addi	$t0, $t0, 1
 
 	bne	$t0, $s0, LoopF2
 
-	move	$v0, $t2		# Return the sum value through $v0 ( return sum; )
+	move	$v0, $t2		# Return the sum value through $v0
 	
 	jr 	$ra 
 
@@ -243,24 +242,25 @@ selectF3:
 	li	$t0, 0			# $t0 contains index of array
 	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack
 
-	li	$v0, 4
-	la	$a0, Result
+	li	$v0, 4			
+	la	$a0, Result		# Print "Result: "
 	syscall	
 
 	j	LoopF3
 
 LoopF3:
-	lw	$t2, ($t1)	
-	addi	$sp, $sp, -8
-	sw	$t0, 0($sp)
-	sw	$t1, 4($sp)
+	lw	$t2, ($t1)		# Get current element
+
+	addi	$sp, $sp, -8		# Declare a stack
+	sw	$t0, 0($sp)		# to store current index and pointer pointing to current element
+	sw	$t1, 4($sp)		# before jumping into check prime function
 	
-	jal 	IsPrime
+	jal 	IsPrime			# Check whether element is prime no. or not
 	
-	beq	$v0,$0, NotPrint
+	beq	$v0, $0, NotPrint
 Print:
-	li	$v0, 1			# Print integer :>
-	move 	$a0, $t2		# It used to be a 0 in front of the "($t1)", but this guy don't want to so it now dissappear :< 
+	li	$v0, 1			
+	move 	$a0, $t2		# Print prime number
 	syscall
 
 	li	$v0, 4
@@ -268,14 +268,15 @@ Print:
 	syscall
 
 NotPrint:
-	lw	$t0, 0($sp)
+	lw	$t0, 0($sp)		# Restore the values of $t0 and $t1 in LoopF3 function
 	lw	$t1, 4($sp)
 
-	addi	$sp, $sp, 8
-	addi	$t1, $t1, 4
-	addi	$t0, $t0, 1
+	addi	$sp, $sp, 8		# Free stack frame
 
-	bne	$t0, $s0, LoopF3	
+	addi	$t1, $t1, 4		# Point to the next element
+	addi	$t0, $t0, 1		# Increase index
+
+	bne	$t0, $s0, LoopF3	# If index not equal to n, keep looping
 
 	li	$v0, 4
 	la	$a0, CR
@@ -283,44 +284,53 @@ NotPrint:
 	syscall
 	
 	j 	reset
+
+
+#**********************#
 IsPrime:
-	blt 	$t2, 2, LessThan2
-	
-GreaterAndEqual2:
-	beq	$t2, 2, Equal2
+	blt 	$t2, 2, LessThan2	# Check if current element < 2 or not
+GreaterAndEqual2:			# If element >= 2
+	beq	$t2, 2, Equal2		# Check if element = 2 or not
 
-	addi	$t1, $0, 2
-	div	$t2,$t1
-	mflo	$t1
-	li	$t0, 2
-	addi	$sp, $sp, -4
-	sw	$ra, 0($sp)
+	addi	$t1, $0, 2		# $t2 now contains the current element value
+	div	$t2, $t1			# We just loop until index reach n/2
+	mflo	$t1			# $t1 = n/2
+
+	addi	$sp, $sp, -4		# Create a stack to store the previous caller's address
+	sw	$ra, ($sp)
+
+	li	$t0, 2			# Start index from 2 ( ~for(int i = 2; i <= n/2; i++) )
+
 	jal	LoopIsPrime
-	lw	$ra, 0($sp)
-	addi	$sp,$sp, 4
+
+	lw	$ra, 0($sp)		# Restore the address of caller's address
+
+	addi	$sp, $sp, 4		# Free the stack frame
+
 	jr	$ra
-
-Equal2:
-	li	$v0, 1
+Equal2:					# If element = 2
+	li	$v0, 1			# Return true if element = 2
 	jr 	$ra
-
-LessThan2:
-	li	$v0,0
+LessThan2:				# If element < 2
+	li	$v0, 0			# Return false if element < 2
 	jr	$ra
 
 LoopIsPrime:
 	div	$t2, $t0
 	mfhi	$t3
-	beq	$t3, $0, Equal0
-NotEqual0:
-	addi	$t0,$t0,1	
-	ble	$t0, $t1, LoopIsPrime
-	li	$v0, 1
-	jr	$ra
 
-Equal0:
-	li	$v0, 0
+	beq	$t3, $0, EqualZERO
+NotEqualZERO:				# If current element divide by 2 and has no remainder
+	addi	$t0, $t0, 1		# Increase index
+
+	ble	$t0, $t1, LoopIsPrime	# Loop 'til index is greater than n/2
+
+	li	$v0, 1			# Return true if current element is prime no.
+	jr	$ra
+EqualZERO:
+	li	$v0, 0			# Return false if current element divide by 2 and has remainder
 	jr	$ra		
+
 
 #*********************************************************#
 selectF4:
@@ -372,28 +382,31 @@ selectF5:
 	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack
 
 	li 	$v0, 4
-	la 	$a0, InputNumber
+	la 	$a0, InputNumber	# Input the number want to search
 	syscall
 	
-	li 	$v0,5
+	li 	$v0, 5
 	syscall
-	move 	$s2,$v0
-	
+
+	move	$t2, $v0		# Move input number to temporary register $t2
+
 	li	$v0, 4
 	la	$a0, Result
 	syscall	
 
+	move 	$a0, $t2		# Move input value to argument register $a0
+
 	j	LoopF5
 
 LoopF5:
-	lw	$t2, ($t1)		# t2 = current element
-	seq 	$t4, $t2, $s2		# if t2 = s2 (x), t3 = 1 else t3 = 0
+	lw	$t2, ($t1)		# $t2 = Current element
+	seq 	$t3, $t2, $a0		# $t2 = $a0 ? $t3 = 1 : $t3 = 0
 
-	bne	$t4,1,NotInList
+	bne	$t3, 1, NotInList
 
 InList:
-	li	$v0,1
-	add 	$a0,$0,$t0
+	li	$v0, 1
+	add 	$a0, $0, $t0
 	syscall
 
 	li	$v0, 4
@@ -403,13 +416,25 @@ InList:
 	j 	reset
 
 NotInList:
-	addi	$t1, $t1, 4	
-	addi	$t0, $t0, 1
-	bne	$t3, $1, LoopF5		# if t3 != 1, loop
+	addi	$t1, $t1, 4		# Point to the next element
+	addi	$t0, $t0, 1		# Increase index
+
+	bne	$t0, $s0, LoopF5
+
+	li	$v0, 1			# Print -1 if x is not in list after traversal
+	li 	$a0, -1
+	syscall
+
+	li	$v0, 4
+	la	$a0, CR
+	syscall
+	
+	j 	reset
+
 
 #*********************************************************#
 outRange:
-	la	$a0, OutOfRange
+	la	$a0, OutOfRange		# Print "Out of range..."
 	li	$v0, 4
 	syscall
 
