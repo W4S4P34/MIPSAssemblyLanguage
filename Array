@@ -4,11 +4,14 @@
 	ArrayTraversal:	.asciiz "Element no."	
 
 	MenuTitle:	.asciiz "Function Menu:\n"
-	Function1:	.asciiz "1. Print out all elements.\n"
-	Function2:	.asciiz "2. Sum all elements.\n"
-	Function3:	.asciiz "3. List all prime elements.\n"
+	Function1:	.asciiz "1. Print out all elements.\n"	#void Print()
+	Function2:	.asciiz "2. Sum all elements.\n"	#int Sum()
+	Function3:	.asciiz "3. List all prime elements.\n"	#e
 	Function4:	.asciiz "4. Find max.\n"
 	Function5:	.asciiz "5. Find input element.\n"
+	InputNumber:	.asciiz "Please input number to find its index: "
+	
+
 	Function6:	.asciiz "6. Exit.\n"
 	
 	Result:		.asciiz "Result: "
@@ -33,17 +36,17 @@ main:
 	li	$v0, 4
 	syscall
 
-	li	$v0, 5
+	li	$v0, 5			# Read integer
 	syscall
 
-	move	$t0, $v0
+	move	$t0, $v0		
 
 	bgt 	$t0, 1000, outRange	# If n <= 0 or n > 1000, announce then reset
 	blt 	$t0, 1, outRange
 
 	move	$s0, $t0		# $s0 contains n
 
-	li	$t1, 4
+	li	$t1, 4			# addi $t1, $0, 4
 
 	mult	$t0, $t1
 	mflo	$t0
@@ -55,7 +58,7 @@ main:
 	mult	$t0, $t1
 	mflo	$t0
 
-	add	$sp, $sp, $t0		# Declare array with n elements, each has 4 byte
+	add	$sp, $sp, $t0		# Declare array with n elements, each has 4 byte 
 
 	#**********************#
 	jal 	initArray
@@ -133,6 +136,7 @@ showMenu:
 	jr	$ra			# Return to main
 
 
+#*********************************************************#
 selectFunction:
 	la	$a0, Selection		# Show selection title
 	li	$v0, 4			# Load $v0 with 4 to print string
@@ -166,7 +170,7 @@ selectFunction:
 
 #*********************************************************#
 selectF1:
-	li	$t0, 0			# $t0 contains index of array
+	li	$t0, 0			# int i = 0
 	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack
 
 	li	$v0, 4
@@ -176,18 +180,18 @@ selectF1:
 	j	LoopF1
 
 LoopF1:
-	li	$v0, 1
-	lw	$a0, ($t1)
+	li	$v0, 1			# Print integer :>
+	lw	$a0, ($t1)		# It used to be a 0 in front of the "($t1)", but this guy don't want to so it now dissappear :< 
 	syscall
 
 	li	$v0, 4
 	la	$a0, Spacebar
 	syscall
 
-	addi	$t1, $t1, 4
-	addi	$t0, $t0, 1
+	addi	$t1, $t1, 4		# Point to the next element - IELTS 9.0 said :D
+	addi	$t0, $t0, 1		# i++
 
-	bne	$t0, $s0, LoopF1	
+	bne	$t0, $s0, LoopF1	# i < n
 
 	li	$v0, 4
 	la	$a0, CR
@@ -198,16 +202,16 @@ LoopF1:
 
 #*********************************************************#
 selectF2:
-	li	$t0, 0			# $t0 contains index of array
-	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack
+	li	$t0, 0			# $t0 contains index of array ( int i  = 0 )
+	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack ( t1 = a[0] )
 
 	li	$v0, 4
 	la	$a0, Result
 	syscall	
 
-	li	$t2, 0			# Sum of elements variable
+	li	$t2, 0			# Sum of elements variable ( int sum = 0 )
 
-	jal	LoopF2
+	jal	LoopF2			# Sum(array[] n)
 	
 	move  	$a0, $v0		# Set the sum value to $a0: argument of $v0 = 1, print integer
 
@@ -221,17 +225,17 @@ selectF2:
 	j 	reset
 
 LoopF2:
-	lw	$t3, ($t1)		# Get current element and store in $t3
-	add	$t2, $t2, $t3
+	lw	$t3, ($t1)		# Get current element and store in $t3  (t3 =  a[i])
+	add	$t2, $t2, $t3		# sum = sum + a[i]
 
 	addi	$t1, $t1, 4
 	addi	$t0, $t0, 1
 
 	bne	$t0, $s0, LoopF2
 
-	move	$v0, $t2		# Return the sum value through $v0
+	move	$v0, $t2		# Return the sum value through $v0 ( return sum; )
 	
-	jr 	$ra
+	jr 	$ra 
 
 
 #*********************************************************#
@@ -246,8 +250,28 @@ selectF3:
 	j	LoopF3
 
 LoopF3:
+	lw	$t2, ($t1)	
+	addi	$sp, $sp, -8
+	sw	$t0, 0($sp)
+	sw	$t1, 4($sp)
 	
+	jal 	IsPrime
+	
+	beq	$v0,$0, NotPrint
+Print:
+	li	$v0, 1			# Print integer :>
+	move 	$a0, $t2		# It used to be a 0 in front of the "($t1)", but this guy don't want to so it now dissappear :< 
+	syscall
 
+	li	$v0, 4
+	la	$a0, Spacebar
+	syscall
+
+NotPrint:
+	lw	$t0, 0($sp)
+	lw	$t1, 4($sp)
+
+	addi	$sp, $sp, 8
 	addi	$t1, $t1, 4
 	addi	$t0, $t0, 1
 
@@ -255,21 +279,59 @@ LoopF3:
 
 	li	$v0, 4
 	la	$a0, CR
+
 	syscall
 	
 	j 	reset
+IsPrime:
+	blt 	$t2, 2, LessThan2
+	
+GreaterAndEqual2:
+	beq	$t2, 2, Equal2
 
+	addi	$t1, $0, 2
+	div	$t2,$t1
+	mflo	$t1
+	li	$t0, 2
+	addi	$sp, $sp, -4
+	sw	$ra, 0($sp)
+	jal	LoopIsPrime
+	lw	$ra, 0($sp)
+	addi	$sp,$sp, 4
+	jr	$ra
+
+Equal2:
+	li	$v0, 1
+	jr 	$ra
+
+LessThan2:
+	li	$v0,0
+	jr	$ra
+
+LoopIsPrime:
+	div	$t2, $t0
+	mfhi	$t3
+	beq	$t3, $0, Equal0
+NotEqual0:
+	addi	$t0,$t0,1	
+	ble	$t0, $t1, LoopIsPrime
+	li	$v0, 1
+	jr	$ra
+
+Equal0:
+	li	$v0, 0
+	jr	$ra		
 
 #*********************************************************#
 selectF4:
 	li	$t0, 0			# $t0 contains index of array
-	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack
+	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack (t1 = &a[0])
 
 	li	$v0, 4
 	la	$a0, Result
 	syscall	
 
-	lw	$a0, 0($sp)		# Max variable is the first element
+	lw	$a0, 0($sp)		# Max variable is the first element ( int max = a[0] )
 
 	jal	LoopF4
 
@@ -285,9 +347,9 @@ selectF4:
 	j	reset
 
 LoopF4:
-	lw	$t2, ($t1)		# Get current element and store to $t2
+	lw	$t2, ($t1)		# Get current element and store to $t2 (t2 = a[0])
 
-	sgt	$t3, $t2, $a0
+	sgt	$t3, $t2, $a0		# If t2 > max -> t3 = 1 else t3 = 0
 	bne	$t3, 1, NotAssignMax
 
 AssignMax:
@@ -309,6 +371,14 @@ selectF5:
 	li	$t0, 0			# $t0 contains index of array
 	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack
 
+	li 	$v0, 4
+	la 	$a0, InputNumber
+	syscall
+	
+	li 	$v0,5
+	syscall
+	move 	$s2,$v0
+	
 	li	$v0, 4
 	la	$a0, Result
 	syscall	
@@ -316,12 +386,15 @@ selectF5:
 	j	LoopF5
 
 LoopF5:
-	
+	lw	$t2, ($t1)		# t2 = current element
+	seq 	$t4, $t2, $s2		# if t2 = s2 (x), t3 = 1 else t3 = 0
 
-	addi	$t1, $t1, 4
-	addi	$t0, $t0, 1
+	bne	$t4,1,NotInList
 
-	bne	$t0, $s0, LoopF5	
+InList:
+	li	$v0,1
+	add 	$a0,$0,$t0
+	syscall
 
 	li	$v0, 4
 	la	$a0, CR
@@ -329,6 +402,10 @@ LoopF5:
 	
 	j 	reset
 
+NotInList:
+	addi	$t1, $t1, 4	
+	addi	$t0, $t0, 1
+	bne	$t3, $1, LoopF5		# if t3 != 1, loop
 
 #*********************************************************#
 outRange:
