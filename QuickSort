@@ -108,6 +108,15 @@ printElement:
 	bne	$t0, $s1, printElement
 
 #**********************#
+	# Free the stack frame
+	li	$t0, 4
+
+	mult	$t0, $s1
+	mflo	$t0
+
+	add	$sp, $sp, $t0			# Free stack frame
+
+#**********************#
  	# Close the file
 	li 	$v0, 16 			# System call for closing file 
  	move 	$a0, $s0 			# Restore file descriptor
