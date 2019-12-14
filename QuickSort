@@ -49,9 +49,9 @@ readNumber:
 	j	readNumber
 returnLF_Number:
 	# Print number of elements
-	lw	$s1, ($sp)
+	lw	$s1, ($sp)			# Store number of elements to $s1
 
-	addi	$sp, $sp, 4
+	addi	$sp, $sp, 4			# Move current $sp back to initial position
 
 	li	$v0, 1
 	add	$a0, $0, $s1
@@ -62,6 +62,8 @@ returnLF_Number:
 	syscall
 
 #**********************#
+	li	$t5, 0				# Init "elementCount" variable/ "count" variable of $t1 contains "digitCount"
+
 readElements:
 returnSP_Elements:				# Should file iterator meet the ' ' character, it may continue to read file
 	# Read elements
@@ -158,6 +160,9 @@ handleLF_Number:
 
 #*********************************************************#
 handleEOF:
+	beq	$t5, $s1, returnEOF		# If "elementCount" == Number of elements,
+						# return back to main
+
 	lb	$t0, ($sp)			# Get current digit
 	addi	$sp, $sp, 1			# Move up the stack pointer
 
@@ -204,6 +209,8 @@ handleSP_Elements:
 	mflo	$t2
 
 	bne	$t1, $0, handleSP_Elements
+
+	addi	$t5, $t5, 1			# Increase "elementCount"
 
 	addi	$sp, $sp, -4			# Set $sp to proper position
 	sw	$t3, ($sp)
