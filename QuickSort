@@ -1,0 +1,223 @@
+.data
+	# ReadFile
+						# Filename for input
+	fin: 		.asciiz "C:/Users/HP/Downloads/MARS/input_sort.txt" 							
+	buffer: 	.space 1024
+	# Escape Sequence
+	CR:		.asciiz "\n"
+	Spacebar:	.asciiz " "
+.text
+	.globl main
+
+main:
+#**********************#
+	# Open the file
+	li	$v0, 13 			# System call for opening file
+ 	la	$a0, fin 			# Input filename
+ 	li	$a1, 0				# Flags to read
+	li	$a2, 0				# Ignore mode
+ 	syscall 				# Open the file (File descriptor returned in $v0)
+
+ 	move 	$s0, $v0 			# Save file descriptor in $s0
+
+	li	$t1, 0				# Initialize "count" variable
+	li	$t2, 1				# Initialize "base" variable
+	li	$t3, 0				# Initialize "sum" variable
+
+#**********************#
+	# Read the file
+readNumber:
+	# Read number of elements
+ 	li 	$v0, 14 			# System call for reading from file
+ 	move	$a0, $s0 			# Put the file descriptor in $a0
+ 	la 	$a1, buffer			# Address of buffer from which to read
+ 	li 	$a2, 1				
+ 	syscall 				# Read from file 
+
+	lb	$t0, buffer
+		
+	beq	$t0, 13, readNumber		# Endline with CR LF (\n\r) / Skip '\n'
+	beq	$t0, 10, handleLF_Number	# Check whether buffer contains '\n' or not
+
+	addi	$t0, $t0, -48			# Get real digit
+
+	addi	$sp, $sp, -1	
+	sb	$t0, ($sp)
+	
+	addi	$t1, $t1, 1
+
+	j	readNumber
+returnLF_Number:
+	# Print number of elements
+	lw	$s1, ($sp)			# Store number of elements to $s1
+
+	addi	$sp, $sp, 4			# Move current $sp back to initial position
+
+	li	$v0, 1
+	add	$a0, $0, $s1
+	syscall 
+
+	li	$v0, 4
+	la	$a0, CR
+	syscall
+
+#**********************#
+	li	$t5, 0				# Init "elementCount" variable/ "count" variable of $t1 contains "digitCount"
+
+readElements:
+returnSP_Elements:				# Should file iterator meet the ' ' character, it may continue to read file
+	# Read elements
+ 	li 	$v0, 14 			# System call for reading from file
+ 	move	$a0, $s0 			# Put the file descriptor in $a0
+ 	la 	$a1, buffer			# Address of buffer from which to read
+ 	li 	$a2, 1				
+ 	syscall 				# Read from file 
+
+	lb	$t0, buffer
+	
+	beq	$v0, $0, handleEOF
+	beq	$t0, 13, readElements		# Check whether buffer contains '\n' or ' ' (Escape Sequence)
+	beq	$t0, 10, readElements		# Endline with CR LF (\n\r) / Skip '\n'	and '\r'
+	beq	$t0, 32, handleSP_Elements
+
+	addi	$t0, $t0, -48			# Get real digit
+
+	addi	$sp, $sp, -1	
+	sb	$t0, ($sp)
+	
+	addi	$t1, $t1, 1
+
+	j	readElements
+returnEOF:
+	# Print elements
+	li	$t0, 0	
+	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack
+
+	j	printElement
+
+printElement:
+	li	$v0, 1			# Print integer
+	lw	$a0, ($t1) 
+	syscall
+
+	li	$v0, 4
+	la	$a0, Spacebar
+	syscall
+
+	addi	$t1, $t1, 4		# Point to the next element
+	addi	$t0, $t0, 1
+
+	bne	$t0, $s1, printElement
+
+#**********************#
+	# Free the stack frame
+	li	$t0, 4
+
+	mult	$t0, $s1
+	mflo	$t0
+
+	add	$sp, $sp, $t0			# Free stack frame
+
+#**********************#
+ 	# Close the file
+	li 	$v0, 16 			# System call for closing file 
+ 	move 	$a0, $s0 			# Restore file descriptor
+ 	syscall 				# Close file
+
+ 	li 	$v0, 10 			# End the program
+ 	syscall 
+
+
+#*********************************************************#
+handleLF_Number:
+	lb	$t0, ($sp)			# Get current digit
+	addi	$sp, $sp, 1			# Move up the stack pointer
+
+	mult	$t0, $t2			# Multiple digit by base
+	mflo	$t0
+
+	add	$t3, $t3, $t0			# Sum up all digits to create the number
+
+	addi	$t1, $t1, -1			# Decrease the "count" variable
+
+	li	$t4, 10				# $t4 = 10
+
+	mult	$t2, $t4			# Increase the position of digit
+	mflo	$t2
+
+	bne	$t1, $0, handleLF_Number
+
+	addi	$sp, $sp, -4			# Set $sp to proper position
+	sw	$t3, ($sp)
+
+	# Restore all temporary registers
+	li	$t1, 0				# Reset "count" to 0
+	li	$t2, 1				# Reset "base" to 1
+	li	$t3, 0				# Reset "sum" to 0
+	
+	j	returnLF_Number
+
+
+#*********************************************************#
+handleEOF:
+	beq	$t5, $s1, returnEOF		# If "elementCount" == Number of elements,
+						# return back to main
+
+	lb	$t0, ($sp)			# Get current digit
+	addi	$sp, $sp, 1			# Move up the stack pointer
+
+	mult	$t0, $t2			# Multiple digit by base
+	mflo	$t0
+
+	add	$t3, $t3, $t0			# Sum up all digits to create the number
+
+	addi	$t1, $t1, -1			# Decrease the "count" variable
+
+	li	$t4, 10				# $t4 = 10
+
+	mult	$t2, $t4			# Increase the position of digit
+	mflo	$t2
+
+	bne	$t1, $0, handleEOF
+
+	addi	$sp, $sp, -4			# Set $sp to proper position
+	sw	$t3, ($sp)
+
+	# Restore all temporary registers
+	li	$t1, 0				# Reset "count" to 0
+	li	$t2, 1				# Reset "base" to 1
+	li	$t3, 0				# Reset "sum" to 0
+	
+	j	returnEOF
+
+
+#*********************************************************#
+handleSP_Elements:
+	lb	$t0, ($sp)			# Get current digit
+	addi	$sp, $sp, 1			# Move up the stack pointer
+
+	mult	$t0, $t2			# Multiple digit by base
+	mflo	$t0
+
+	add	$t3, $t3, $t0			# Sum up all digits to create the number
+
+	addi	$t1, $t1, -1			# Decrease the "count" variable
+
+	li	$t4, 10				# $t4 = 10
+
+	mult	$t2, $t4			# Increase the position of digit
+	mflo	$t2
+
+	bne	$t1, $0, handleSP_Elements
+
+	addi	$t5, $t5, 1			# Increase "elementCount"
+
+	addi	$sp, $sp, -4			# Set $sp to proper position
+	sw	$t3, ($sp)
+
+	# Restore all temporary registers
+	li	$t1, 0				# Reset "count" to 0
+	li	$t2, 1				# Reset "base" to 1
+	li	$t3, 0				# Reset "sum" to 0
+	
+	j	returnSP_Elements
