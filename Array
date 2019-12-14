@@ -1,0 +1,473 @@
+.data
+	# Statements
+	ArrayInput:	.asciiz "Number of elements (0 < n <= 1000): "
+	ArrayTraversal:	.asciiz "Element no."	
+
+	MenuTitle:	.asciiz "Function Menu:\n"
+	Function1:	.asciiz "1. Print out all elements.\n"
+	Function2:	.asciiz "2. Sum all elements.\n"
+	Function3:	.asciiz "3. List all prime elements.\n"
+	Function4:	.asciiz "4. Find max.\n"
+	Function5:	.asciiz "5. Find input element.\n"
+	Function6:	.asciiz "6. Exit.\n"
+	
+	InputNumber:	.asciiz "Please input a number to find its index: "
+
+	Result:		.asciiz "Result: "
+
+	Selection:	.asciiz "Select: "
+
+	Reset:		.asciiz "Continue? (1/2) 1. Yes, 2. No\n"
+
+	OutOfRange:	.asciiz "Out of range! Select again!\n"
+	ExitAnnounce:	.asciiz "Exit Sucessfully!"
+
+	# Escape Sequence
+	CR:		.asciiz "\n"
+	Spacebar:	.asciiz " "
+	Colon:		.asciiz ": "
+
+.text
+	.globl 	main
+
+main:
+	la	$a0, ArrayInput		# Input number of elements
+	li	$v0, 4
+	syscall
+
+	li	$v0, 5			# Read integer
+	syscall
+
+	move	$t0, $v0		
+
+	bgt 	$t0, 1000, outRange	# If n <= 0 or n > 1000, announce then reset
+	blt 	$t0, 1, outRange
+
+	move	$s0, $t0		# $s0 contains n
+
+	li	$t1, 4			# addi $t1, $0, 4
+
+	mult	$t0, $t1
+	mflo	$t0
+
+	move	$s1, $t0		# $s1 contains n x 4 byte
+
+	li	$t1, -1
+
+	mult	$t0, $t1
+	mflo	$t0
+
+	add	$sp, $sp, $t0		# Declare array with n elements, each has 4 byte 
+
+	#**********************#
+	jal 	initArray
+
+	#**********************#
+	jal 	showMenu
+
+	#**********************#
+	jal 	selectFunction
+
+	j	exit
+
+#*********************************************************#
+initArray:
+	li	$t0, 0			# $t0 contains index of array
+	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack
+
+	j	LoopInitArray
+
+LoopInitArray:
+	li	$v0, 4
+	la	$a0, ArrayTraversal
+	syscall
+
+	li	$v0, 1
+	add	$a0, $0, $t0
+	syscall
+
+	li	$v0, 4
+	la	$a0, Colon
+	syscall
+
+	li	$v0, 5			# Input each element
+	syscall
+
+	sw	$v0, ($t1)		# Store value into stack array
+	
+	addi	$t1, $t1, 4
+	addi	$t0, $t0, 1
+
+	bne	$t0, $s0, LoopInitArray
+	jr	$ra
+	
+
+#*********************************************************#
+showMenu:
+	la	$a0, MenuTitle		# Show menu title
+	li	$v0, 4			# Load $v0 with 4 to print string
+	syscall
+
+	la	$a0, Function1		# Show functions
+	li	$v0, 4			# Load $v0 with 4 to print string
+	syscall
+
+	la	$a0, Function2		# Show functions
+	li	$v0, 4			# Load $v0 with 4 to print string
+	syscall
+	
+	la	$a0, Function3		# Show functions
+	li	$v0, 4			# Load $v0 with 4 to print string
+	syscall
+
+	la	$a0, Function4		# Show functions
+	li	$v0, 4			# Load $v0 with 4 to print string
+	syscall
+
+	la	$a0, Function5		# Show functions
+	li	$v0, 4			# Load $v0 with 4 to print string
+	syscall
+
+	la	$a0, Function6		# Show functions
+	li	$v0, 4			# Load $v0 with 4 to print string
+	syscall
+
+	jr	$ra			# Return to main
+
+
+#*********************************************************#
+selectFunction:
+	la	$a0, Selection		# Show selection title
+	li	$v0, 4			# Load $v0 with 4 to print string
+	syscall
+
+	li	$v0, 5
+	syscall
+
+	move	$t0, $v0
+
+	bgt 	$t0, 6, outRange
+	blt 	$t0, 1, outRange
+
+	#**********************#
+	beq	$t0, 1, selectF1
+
+	#**********************#
+	beq	$t0, 2, selectF2
+
+	#**********************#
+	beq	$t0, 3, selectF3
+	
+	#**********************#
+	beq	$t0, 4, selectF4
+
+	#**********************#
+	beq	$t0, 5, selectF5
+
+	jr	$ra
+
+
+#*********************************************************#
+selectF1:
+	li	$t0, 0	
+	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack
+
+	li	$v0, 4
+	la	$a0, Result
+	syscall	
+
+	j	LoopF1
+
+LoopF1:
+	li	$v0, 1			# Print integer
+	lw	$a0, ($t1) 
+	syscall
+
+	li	$v0, 4
+	la	$a0, Spacebar
+	syscall
+
+	addi	$t1, $t1, 4		# Point to the next element
+	addi	$t0, $t0, 1
+
+	bne	$t0, $s0, LoopF1
+
+	li	$v0, 4
+	la	$a0, CR
+	syscall
+	
+	j 	reset
+
+
+#*********************************************************#
+selectF2:
+	li	$t0, 0			# $t0 contains index of array
+	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack
+
+	li	$v0, 4
+	la	$a0, Result
+	syscall	
+
+	li	$t2, 0			# Sum of elements variable
+
+	jal	LoopF2	
+	
+	move  	$a0, $v0		# Set the sum value to $a0: argument of $v0 = 1, print integer
+
+	li	$v0, 1
+	syscall
+
+	li	$v0, 4
+	la	$a0, CR
+	syscall
+
+	j 	reset
+
+LoopF2:
+	lw	$t3, ($t1)		# Get current element and store in $t3
+	add	$t2, $t2, $t3		# Sum elements' values
+
+	addi	$t1, $t1, 4
+	addi	$t0, $t0, 1
+
+	bne	$t0, $s0, LoopF2
+
+	move	$v0, $t2		# Return the sum value through $v0
+	
+	jr 	$ra 
+
+
+#*********************************************************#
+selectF3:
+	li	$t0, 0			# $t0 contains index of array
+	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack
+
+	li	$v0, 4			
+	la	$a0, Result		# Print "Result: "
+	syscall	
+
+	j	LoopF3
+
+LoopF3:
+	lw	$t2, ($t1)		# Get current element
+
+	addi	$sp, $sp, -8		# Declare a stack
+	sw	$t0, 0($sp)		# to store current index and pointer pointing to current element
+	sw	$t1, 4($sp)		# before jumping into check prime function
+	
+	jal 	IsPrime			# Check whether element is prime no. or not
+	
+	beq	$v0, $0, NotPrint
+Print:
+	li	$v0, 1			
+	move 	$a0, $t2		# Print prime number
+	syscall
+
+	li	$v0, 4
+	la	$a0, Spacebar
+	syscall
+
+NotPrint:
+	lw	$t0, 0($sp)		# Restore the values of $t0 and $t1 in LoopF3 function
+	lw	$t1, 4($sp)
+
+	addi	$sp, $sp, 8		# Free stack frame
+
+	addi	$t1, $t1, 4		# Point to the next element
+	addi	$t0, $t0, 1		# Increase index
+
+	bne	$t0, $s0, LoopF3	# If index not equal to n, keep looping
+
+	li	$v0, 4
+	la	$a0, CR
+
+	syscall
+	
+	j 	reset
+
+
+#**********************#
+IsPrime:
+	blt 	$t2, 2, LessThan2	# Check if current element < 2 or not
+GreaterAndEqual2:			# If element >= 2
+	beq	$t2, 2, Equal2		# Check if element = 2 or not
+
+	addi	$t1, $0, 2		# $t2 now contains the current element value
+	div	$t2, $t1			# We just loop until index reach n/2
+	mflo	$t1			# $t1 = n/2
+
+	addi	$sp, $sp, -4		# Create a stack to store the previous caller's address
+	sw	$ra, ($sp)
+
+	li	$t0, 2			# Start index from 2 ( ~for(int i = 2; i <= n/2; i++) )
+
+	jal	LoopIsPrime
+
+	lw	$ra, 0($sp)		# Restore the address of caller's address
+
+	addi	$sp, $sp, 4		# Free the stack frame
+
+	jr	$ra
+Equal2:					# If element = 2
+	li	$v0, 1			# Return true if element = 2
+	jr 	$ra
+LessThan2:				# If element < 2
+	li	$v0, 0			# Return false if element < 2
+	jr	$ra
+
+LoopIsPrime:
+	div	$t2, $t0
+	mfhi	$t3
+
+	beq	$t3, $0, EqualZERO
+NotEqualZERO:				# If current element divide by 2 and has no remainder
+	addi	$t0, $t0, 1		# Increase index
+
+	ble	$t0, $t1, LoopIsPrime	# Loop 'til index is greater than n/2
+
+	li	$v0, 1			# Return true if current element is prime no.
+	jr	$ra
+EqualZERO:
+	li	$v0, 0			# Return false if current element divide by 2 and has remainder
+	jr	$ra		
+
+
+#*********************************************************#
+selectF4:
+	li	$t0, 0			# $t0 contains index of array
+	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack (t1 = &a[0])
+
+	li	$v0, 4
+	la	$a0, Result
+	syscall	
+
+	lw	$a0, 0($sp)		# Max variable is the first element ( int max = a[0] )
+
+	jal	LoopF4
+
+	move	$a0, $v0
+
+	li	$v0, 1
+	syscall
+
+	li	$v0, 4
+	la	$a0, CR
+	syscall
+
+	j	reset
+
+LoopF4:
+	lw	$t2, ($t1)		# Get current element and store to $t2 (t2 = a[0])
+
+	sgt	$t3, $t2, $a0		# If t2 > max -> t3 = 1 else t3 = 0
+	bne	$t3, 1, NotAssignMax
+
+AssignMax:
+	add	$a0, $0, $t2
+
+NotAssignMax:
+	addi	$t1, $t1, 4
+	addi	$t0, $t0, 1
+
+	bne	$t0, $s0, LoopF4
+
+	move	$v0, $a0	
+	
+	jr 	$ra
+
+
+#*********************************************************#
+selectF5:
+	li	$t0, 0			# $t0 contains index of array
+	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack
+
+	li 	$v0, 4
+	la 	$a0, InputNumber	# Input the number want to search
+	syscall
+	
+	li 	$v0, 5
+	syscall
+
+	move	$t2, $v0		# Move input number to temporary register $t2
+
+	li	$v0, 4
+	la	$a0, Result
+	syscall	
+
+	move 	$a0, $t2		# Move input value to argument register $a0
+
+	j	LoopF5
+
+LoopF5:
+	lw	$t2, ($t1)		# $t2 = Current element
+	seq 	$t3, $t2, $a0		# $t2 = $a0 ? $t3 = 1 : $t3 = 0
+
+	bne	$t3, 1, NotInList
+
+InList:
+	li	$v0, 1
+	add 	$a0, $0, $t0
+	syscall
+
+	li	$v0, 4
+	la	$a0, CR
+	syscall
+	
+	j 	reset
+
+NotInList:
+	addi	$t1, $t1, 4		# Point to the next element
+	addi	$t0, $t0, 1		# Increase index
+
+	bne	$t0, $s0, LoopF5
+
+	li	$v0, 1			# Print -1 if x is not in list after traversal
+	li 	$a0, -1
+	syscall
+
+	li	$v0, 4
+	la	$a0, CR
+	syscall
+	
+	j 	reset
+
+
+#*********************************************************#
+outRange:
+	la	$a0, OutOfRange		# Print "Out of range..."
+	li	$v0, 4
+	syscall
+
+	j	reset
+
+
+reset:
+	la	$a0, Reset		# Reset question
+	li	$v0, 4			# Load $v0 with 4 to print string
+	syscall
+
+	la	$a0, Selection		# Show selection title
+	li	$v0, 4			# Load $v0 with 4 to print string
+	syscall
+
+	li	$v0, 5
+	syscall
+
+	move 	$t0, $v0
+
+	bgt 	$t0, 2, outRange
+	blt 	$t0, 1, outRange
+
+	beq	$t0, 1, main
+	beq	$t0, 2, exit
+
+
+exit:
+	add	$sp, $sp, $s1		# Free array
+
+	la	$a0, ExitAnnounce	# Announce the exit state
+	li	$v0, 4			# Load $v0 with 4 to print string
+	syscall
+
+	li 	$v0, 10			# Load $v0 with 10 to exit
+	syscall
