@@ -22,7 +22,13 @@ main:
 
 	li	$t1, 0				# Initialize "count" variable
 	li	$t2, 1				# Initialize "base" variable
-	li	$t3, 0				# Initialize "sum" variable
+	li	$t3, 0				# Initialize "sum" variable3	
+	# For sorting
+	lw	$a0, $sp			# Load array into $ao
+	li	$a1, 0				# $a1 = low = 0
+	move	$a2, $s2			# move number of element into a2
+	addi	$a2, $0, -1			# set a2 = high = number of elements - 1
+	jal 	QuickSort
 
 #**********************#
 	# Read the file
@@ -214,3 +220,101 @@ handleSP_Elements:
 	li	$t3, 0				# Reset "sum" to 0
 	
 	j	returnSP_Elements
+#*******************************************************#
+
+Swap:
+	addi 	$sp, $sp, -12
+
+	sw	$a0, 0($sp)
+	sw	$a1, 4($sp)
+	sw	$a2, 8($sp)
+	
+	sll	$t1, $a1, 2			# $t1 = 4*i
+	add	$t1, $a0, $t1			# $t1 take the address of a[i]
+	lw	$s3, 0($t1)			# $s3 = a[i]
+
+	sll	$t2, $a2, 2
+	add	$t2, $a0, $t2
+	lw	$s4, 0($t2)
+	
+	sw 	$s4, 0($t1)			# Swap a[i] and a[j]
+	sw	$s3, 0($t2)
+
+	addi 	$sp, $sp, 12
+	jr 	$ra
+Partition:
+	addi 	$sp, $sp, -16
+	sw	$a0, 0($sp)			# Array
+	sw 	$a1, 4($sp)			# Low	
+	sw	$a2, 8($sp)			# High
+	sw	$ra, 12($sp)			# Return address
+
+	move 	$s1, $a1			# Move low to $s1
+	move 	$s2, $a2			# Move high to $s2
+
+	sll	$t1, $s2, 2			# $t4 = 4*high
+	add	$t1, $a0, $t1			# $t1 takes the address of a[high]
+	lw	$t2, 0($t1)			# $t2 = a[high] = pivot
+	
+	addi	$t3, $s1, -1			# $t3 = low - 1 (Now $t3 = i)
+	move 	$t4, $s1			# $t4 = low 	(Now $t4 = j)
+	addi	$t5, $s2, -1			# $t5 = high - 1
+	ForLoop:
+		slt 	$t6, $t5, $t4		# If $t5 is less than low, then $t6 = 1 else $t6 = 0
+		bne	$t6, $0, EndLoop
+		
+		sll	$t1, $t4, 2		# $t1 = 4*j
+		add	$t1, $a0, $t1		# $t1 is address of a[j]
+		lw	$t7, 0($sp)		# $t7 = a[j]
+		slt	$t8, $t2, $t7		# If pivot is less than a[j]
+		bne	$t8, $0, EndForIf	
+		addi	$t3, $t3, 1		# i++
+
+		move	$a1, $t3
+		move 	$a2, $t4
+		jal 	Swap
+
+		addi 	$t4, $t4, 1		# j++
+		j	ForLoop
+		EndForIf:
+			addi 	$t4, $t4, 1	# j++
+			j	ForLoop
+	EndLoop:
+		addi 	$a1, $t3, 1		# $a1 = i++
+		move	$a2, $s2		# $a2 = high
+		add	$v0, $0, $a1		# v0 = i
+		jal 	Swap
+		
+		lw	$ra, 12($sp)		# Return address
+		addi	$sp, $sp, 16		# Restore the stack
+		jr	$ra
+QuickSort:
+	addi	$sp, $sp, -16
+
+	sw	$a0, 0($sp)			# Array
+	sw	$a1, 4($sp)			# Low
+	sw	$a2, 8($sp)			# High
+	sw	$ra, 12($sp)			# Return address
+	
+	move	$t0, $a2			# Move high to $t0
+	
+	slt	$t1, $a1, $t0			# If low is < high, set $t1 = 1 else $t1 = 0
+	beq 	$t1, $0, EndIf			# If low >= high then jump to EndIf
+	
+	jal 	Partition
+	move 	$s0, $v0			# Pivot (?) Idk
+	
+	lw	$a1, 4($sp)			# $a1 = low
+	addi 	$a2, $s0, -1			# $a2 = high - 1
+	jal 	QuickSort
+	
+	lw	$a2, 8($s0)			# $a2 = high
+	addi	$a1, $0, 1			# $a1 = low + 1
+	jal 	QuickSort
+EndIf:
+	lw	$a0, 0($sp)			# Restore Array
+	lw	$a1, 4($sp)			# Restore Low
+	lw	$a2, 8($sp)			# Restore High
+	lw	$ra, 12($sp)			# Restore Return Address
+	addi	$sp, $sp, 16			# Restore Stack
+	jr	$ra
