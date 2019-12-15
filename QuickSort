@@ -1,8 +1,9 @@
 .data
 	# ReadFile
 						# Filename for input
-	fin: 		.asciiz "C:/Users/HP/Downloads/MARS/input_sort.txt" 							
-	buffer: 	.space 1024
+	fin: 		.asciiz "C:/Users/HP/Downloads/MARS/input_sort.txt"
+	fout:		.asciiz "C:/Users/HP/Downloads/MARS/output_sort.txt"							
+	buffer: 	.space 1024		# Space to handle convertion
 	# Escape Sequence
 	CR:		.asciiz "\n"
 	Spacebar:	.asciiz " "
@@ -11,7 +12,7 @@
 
 main:
 #**********************#
-	# Open the file
+	# Open the input file
 	li	$v0, 13 			# System call for opening file
  	la	$a0, fin 			# Input filename
  	li	$a1, 0				# Flags to read
@@ -24,8 +25,20 @@ main:
 	li	$t2, 1				# Initialize "base" variable
 	li	$t3, 0				# Initialize "sum" variable
 
+
 #**********************#
-	# Read the file
+	# Open the output file
+	li	$v0, 13 			# System call for opening file
+ 	la	$a0, fout 			# Output filename
+ 	li	$a1, 1				# Flags to write
+	li	$a2, 0				# Ignore mode
+ 	syscall 				# Open the file (File descriptor returned in $v0)
+
+ 	move 	$s1, $v0 			# Save file descriptor in $s0
+
+
+#**********************#
+	# Read the input file
 readNumber:
 	# Read number of elements
  	li 	$v0, 14 			# System call for reading from file
@@ -48,18 +61,14 @@ readNumber:
 
 	j	readNumber
 returnLF_Number:
-	# Print number of elements
-	lw	$s1, ($sp)			# Store number of elements to $s1
+
+
+#**********************#
+	# Store number of elements to $s2
+	lw	$s2, ($sp)			# Store number of elements to $s1
 
 	addi	$sp, $sp, 4			# Move current $sp back to initial position
 
-	li	$v0, 1
-	add	$a0, $0, $s1
-	syscall 
-
-	li	$v0, 4
-	la	$a0, CR
-	syscall
 
 #**********************#
 	li	$t5, 0				# Init "elementCount" variable/ "count" variable of $t1 contains "digitCount"
@@ -89,41 +98,118 @@ returnSP_Elements:				# Should file iterator meet the ' ' character, it may cont
 
 	j	readElements
 returnEOF:
-	# Print elements
-	li	$t0, 0	
-	la	$t1, ($sp)		# $t1 and $sp contain the address of the first element of stack
 
-	j	printElement
 
-printElement:
-	li	$v0, 1			# Print integer
-	lw	$a0, ($t1) 
-	syscall
+#**********************#
+	# Reverse the array after reading from file
+	li	$t0, 2
+	div	$s2, $t0
+	mflo	$t0
 
-	li	$v0, 4
-	la	$a0, Spacebar
-	syscall
+	move 	$a0, $t0			# $a0 holds number of half input elements
 
-	addi	$t1, $t1, 4		# Point to the next element
+	li	$t0, 4				# Calculate offset
+	mult	$s2, $t0
+	mflo	$t0
+
+	addi	$t0, $t0, -4
+
+	add	$sp, $sp, $t0
+
+	la	$t1, ($sp)			# $t1 points to last element
+
+	li	$t3, -1				# Calculate offset
+	mult	$t3, $t0
+	mflo	$t0
+
+	add	$sp, $sp, $t0
+
+	la	$t2, ($sp)			# $t2 points to first element
+
+	li	$t0, 0				# Initialize "index" variable
+
+	jal	reverseArray
+
+
+#**********************#
+	# QuickSort
+
+
+
+#**********************#
+	# Convert each integer to string and output
+	li	$t0, 0				# $t0 holds index of each element
+	la	$t1, ($sp)			# $t1 points to the array
+
+convertItoS:
 	addi	$t0, $t0, 1
 
-	bne	$t0, $s1, printElement
+	la	$t3, buffer			# $t3 points to space to handle convertion
+
+	li	$t4, 0				# $t4 holds number of digits
+
+	beq	$t0, 10, EOF
+
+	li	$t2, 32				# ' '
+	sb	$t2, ($t3)
+
+	addi	$t4, $t4, 1
+
+EOF:
+	lw	$t2, ($t1)			# Get number to convert and print and store to $t2
+
+LoopItoS:
+	addi	$t3, $t3, -1			# Point to next digit
+
+	li	$t5, 10
+	div	$t2, $t5
+	mflo	$t2				# $t2 holds new value after being divided (Quotient)
+	mfhi	$t5				# $t5 holds Remainder
+	
+	add	$t5, $t5, '0'			# Change digit into ASCII code
+	sb	$t5, ($t3)
+
+	addi	$t4, $t4, 1
+
+	bne	$t2, $0, LoopItoS
+
+	addi	$t1, $t1, 4
+
+	# Output to file
+	li  	$v0, 15   			# System call for write to file
+	move	$a0, $s1    			# File descriptor 
+	move	$a1, $t3   			# Address of buffer from which to write
+	li	$a2, 0
+	add	$a2, $a2, $t4       		# Buffer length
+	syscall           			# Write to file
+	
+	bne	$t0, $s2, convertItoS		# If ($t0 != $s2), back to convertion function
+
 
 #**********************#
 	# Free the stack frame
 	li	$t0, 4
 
-	mult	$t0, $s1
+	mult	$t0, $s2
 	mflo	$t0
 
 	add	$sp, $sp, $t0			# Free stack frame
 
+
 #**********************#
- 	# Close the file
+ 	# Close the input file
 	li 	$v0, 16 			# System call for closing file 
  	move 	$a0, $s0 			# Restore file descriptor
  	syscall 				# Close file
 
+
+#**********************#
+ 	# Close the output file
+	li 	$v0, 16 			# System call for closing file 
+ 	move 	$a0, $s1 			# Restore file descriptor
+ 	syscall 				# Close file
+
+	# Exit program
  	li 	$v0, 10 			# End the program
  	syscall 
 
@@ -160,7 +246,7 @@ handleLF_Number:
 
 #*********************************************************#
 handleEOF:
-	beq	$t5, $s1, returnEOF		# If "elementCount" == Number of elements,
+	beq	$t5, $s2, returnEOF		# If "elementCount" == Number of elements,
 						# return back to main
 
 	lb	$t0, ($sp)			# Get current digit
@@ -221,3 +307,25 @@ handleSP_Elements:
 	li	$t3, 0				# Reset "sum" to 0
 	
 	j	returnSP_Elements
+
+
+#*********************************************************#
+reverseArray:
+	lw	$t3, ($t1)			# $t3 and $t4 holds pair of elements symmetric
+	lw	$t4, ($t2) 
+
+	sw	$t3, ($t2)			# Swap those elements with each other
+	sw	$t4, ($t1)
+	
+	addi	$t0, $t0, 1			# Increase index
+	addi	$t1, $t1, -4			# Move $t1 pointer to next element
+	add	$t2, $t2, 4			# Move $t2 pointer to previous element
+
+	bne	$t0, $a0, reverseArray
+
+	# Reset temp variables' values
+	li	$t0, 0
+	li	$t1, 0
+	li	$t2, 0
+
+	jr	$ra
