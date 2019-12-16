@@ -1,8 +1,8 @@
 .data
 	# ReadFile
 						# Filename for input
-	fin: 		.asciiz "C:/Users/HP/Downloads/MARS/input_sort.txt"
-	fout:		.asciiz "C:/Users/HP/Downloads/MARS/output_sort.txt"							
+	fin: 		.asciiz "D:/Project/MIPS-Assembly-Language/input_sort.txt"
+	fout:		.asciiz "D:/Project/MIPS-Assembly-Language/output_sort.txt"							
 	buffer: 	.space 1024		# Space to handle convertion
 	# Escape Sequence
 	CR:		.asciiz "\n"
@@ -34,7 +34,7 @@ main:
 	li	$a2, 0				# Ignore mode
  	syscall 				# Open the file (File descriptor returned in $v0)
 
- 	move 	$s1, $v0 			# Save file descriptor in $s0
+ 	move 	$s1, $v0 			# Save file descriptor in $s0 
 
 
 #**********************#
@@ -44,7 +44,7 @@ readNumber:
  	li 	$v0, 14 			# System call for reading from file
  	move	$a0, $s0 			# Put the file descriptor in $a0
  	la 	$a1, buffer			# Address of buffer from which to read
- 	li 	$a2, 1				
+ 	li 	$a2, 1				# Number of character to read				
  	syscall 				# Read from file 
 
 	lb	$t0, buffer
@@ -60,12 +60,12 @@ readNumber:
 	addi	$t1, $t1, 1
 
 	j	readNumber
-returnLF_Number:
+	returnLF_Number:
 
 
 #**********************#
 	# Store number of elements to $s2
-	lw	$s2, ($sp)			# Store number of elements to $s1
+	lw	$s2, ($sp)			# Store number of elements to $s2
 
 	addi	$sp, $sp, 4			# Move current $sp back to initial position
 
@@ -74,30 +74,29 @@ returnLF_Number:
 	li	$t5, 0				# Init "elementCount" variable/ "count" variable of $t1 contains "digitCount"
 
 readElements:
-returnSP_Elements:				# Should file iterator meet the ' ' character, it may continue to read file
-	# Read elements
- 	li 	$v0, 14 			# System call for reading from file
- 	move	$a0, $s0 			# Put the file descriptor in $a0
- 	la 	$a1, buffer			# Address of buffer from which to read
- 	li 	$a2, 1				
- 	syscall 				# Read from file 
+	returnSP_Elements:				# Should file iterator meet the ' ' character, it may continue to read file
+		li 	$v0, 14 			# System call for reading from file
+ 		move	$a0, $s0 			# Put the file descriptor in $a0
+ 		la 	$a1, buffer			# Address of buffer from which to read
+ 		li 	$a2, 1				
+ 		syscall 				# Read from file 
 
-	lb	$t0, buffer
+		lb	$t0, buffer
 	
-	beq	$v0, $0, handleEOF
-	beq	$t0, 13, readElements		# Check whether buffer contains '\n' or ' ' (Escape Sequence)
-	beq	$t0, 10, readElements		# Endline with CR LF (\n\r) / Skip '\n'	and '\r'
-	beq	$t0, 32, handleSP_Elements
+		beq	$v0, $0, handleEOF
+		beq	$t0, 13, readElements		# Check whether buffer contains '\n' or ' ' (Escape Sequence)
+		beq	$t0, 10, readElements		# Endline with CR LF (\n\r) / Skip '\n'	and '\r'
+		beq	$t0, 32, handleSP_Elements
 
-	addi	$t0, $t0, -48			# Get real digit
+		addi	$t0, $t0, -48			# Get real digit
 
-	addi	$sp, $sp, -1	
-	sb	$t0, ($sp)
+		addi	$sp, $sp, -1	
+		sb	$t0, ($sp)
 	
-	addi	$t1, $t1, 1
+		addi	$t1, $t1, 1
 
-	j	readElements
-returnEOF:
+		j	readElements
+	returnEOF:
 
 
 #**********************#
@@ -131,9 +130,13 @@ returnEOF:
 	jal	reverseArray
 
 
-#**********************#
+#**********************# 
 	# QuickSort
-
+	la	$a0, ($sp)			# Load array into $a0 	 
+	li	$a1, 0				# $a1 = low = 0
+	move	$a2, $s2			# Move number of elements into $a2
+	addi	$a2, $a2, -1			# Set $a2 = high = number of elements - 1
+	jal 	QuickSort
 
 
 #**********************#
@@ -148,7 +151,7 @@ convertItoS:
 
 	li	$t4, 0				# $t4 holds number of digits
 
-	beq	$t0, 10, EOF
+	beq	$t0, $s2, EOF
 
 	li	$t2, 32				# ' '
 	sb	$t2, ($t3)
@@ -327,5 +330,117 @@ reverseArray:
 	li	$t0, 0
 	li	$t1, 0
 	li	$t2, 0
+
+	jr	$ra
+
+
+#*********************************************************#
+	# QuickSort  
+Swap:						# Swap(int array[], int swap1, int swap2)
+	addi 	$sp, $sp, -12
+
+	sw	$t1, 0($sp)			# Save Pivot in Partition
+	sw 	$t2, 4($sp)			# Save i in Partition
+	sw	$t3, 8($sp)			# Save j in Partition
+	
+	sll	$t0, $a1, 2			# $t0 = 4 * swap1
+	add	$t0, $a0, $t0			# $t0 takes the index of a[swap1]
+	lw	$t1, 0($t0)			# $t1 = a[swap1]
+
+	sll	$t2, $a2, 2			# $t2 = 4 * swap2
+	add	$t2, $a0, $t2			# $t2 takes the index of a[swap2]
+	lw	$t3, 0($t2)			# $t3 = a[swap2]
+	
+	sw 	$t1, 0($t2)			# Swap a[swap1] and a[swap2]
+	sw	$t3, 0($t0)
+
+	lw 	$t1, 0($sp)			# Load Pivot into $t1 again
+	lw	$t2, 4($sp)			# Load i into $t2 again
+	lw	$t3, 8($sp)			# Load j into $t3 again
+
+	addi 	$sp, $sp, 12			# Free stack
+
+	jr 	$ra				
+
+Partition:
+	addi 	$sp, $sp, -12
+	
+	sw	$a1, 0($sp)			# Store low
+	sw	$a2, 4($sp)			# Store High
+	sw	$ra, 8($sp)			# Return address
+
+	sll	$t0, $a2, 2			# $t0 = 4*high
+	add	$t0, $a0, $t0			# $t0 takes the address of a[high]
+	lw	$t1, 0($t0)			# $t1 = a[high] = pivot
+	
+	addi	$t2, $a1, -1			# $t2 = low - 1 (Now $t2 = i)
+
+	move 	$t3, $a1			# $t3 = low 	(Now $t3 = j)
+
+	addi	$t4, $a2, -1			# $t4 = high - 1
+	ForLoop:
+		bgt	$t3, $t4, EndLoop	# If low >= high - 1, go to EndLoop
+		
+		sll	$t0, $t3, 2		# $t0 = 4 * j
+		add	$t0, $a0, $t0		# $t0 is address of array[j]
+		lw	$t5, 0($t0)		# $t5 = array[j]
+
+		bge	$t5, $t1, EndForIf 	# If array[j] < pivot
+
+		addi	$t2, $t2, 1		# i++
+
+		move	$a1, $t2		# Move i to a1 to swap
+		move 	$a2, $t3		# Move j to a2 to swap
+		jal 	Swap	
+										
+		EndForIf:
+			addi 	$t3, $t3, 1	# j++
+			j	ForLoop
+
+	EndLoop:
+		lw	$a1, 0($sp)		# Load low back to $a1
+		lw	$a2, 4($sp)		# Load high back to $a2
+
+		addi 	$a1, $t2, 1		# $a1 = i++ = low
+
+		jal 	Swap
+
+		add	$v0, $0, $a1		# $v0 = i 
+		
+		lw	$ra, 8($sp)		# Return address
+
+		addi	$sp, $sp, 12		# Restore the stack
+
+		jr	$ra
+
+QuickSort:
+	addi	$sp, $sp, -16
+
+	sw	$a0, 0($sp)			# Array
+	sw	$a1, 4($sp)			# Low
+	sw	$a2, 8($sp)			# High
+	sw	$ra, 12($sp)			# Return address
+	
+	slt	$t0, $a1, $a2			# If low is < high, set $t1 = 1 else $t1 = 0
+	beq 	$t0, $0, EndIf			# If low >= high then jump to EndIf
+	
+	jal 	Partition
+	move 	$s3, $v0			# Pivot
+	
+	lw	$a1, 4($sp)			# $a1 = low
+	addi 	$a2, $s3, -1			# $a2 = pi - 1
+	jal 	QuickSort
+	
+	addi	$a1, $s3, 1			# $a1 = pi + 1
+	lw	$a2, 8($sp)			# $a2 = high
+	jal 	QuickSort
+
+EndIf: 	
+	lw	$a0, 0($sp)			# Restore Array 
+	lw	$a1, 4($sp)			# Restore Low
+	lw	$a2, 8($sp)			# Restore High
+	lw	$ra, 12($sp)			# Restore Return Address 
+
+	addi	$sp, $sp, 16			# Restore Stack
 
 	jr	$ra
