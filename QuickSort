@@ -343,13 +343,13 @@ Swap:						# Swap(int array[], int swap1, int swap2)
 	sw 	$t2, 4($sp)			# Save i in Partition
 	sw	$t3, 8($sp)			# Save j in Partition
 	
-	sll	$t0, $a1, 2			# $t1 = 4*swap1
-	add	$t0, $a0, $t0			# $t1 takes the index of a[swap1]
-	lw	$t1, 0($t0)			# $s4 = a[swap1]
+	sll	$t0, $a1, 2			# $t0 = 4 * swap1
+	add	$t0, $a0, $t0			# $t0 takes the index of a[swap1]
+	lw	$t1, 0($t0)			# $t1 = a[swap1]
 
-	sll	$t2, $a2, 2			# $t2 = 4*swap2
+	sll	$t2, $a2, 2			# $t2 = 4 * swap2
 	add	$t2, $a0, $t2			# $t2 takes the index of a[swap2]
-	lw	$t3, 0($t2)			# $s5 = a[swap2]
+	lw	$t3, 0($t2)			# $t3 = a[swap2]
 	
 	sw 	$t1, 0($t2)			# Swap a[swap1] and a[swap2]
 	sw	$t3, 0($t0)
@@ -358,15 +358,15 @@ Swap:						# Swap(int array[], int swap1, int swap2)
 	lw	$t2, 4($sp)			# Load i into $t2 again
 	lw	$t3, 8($sp)			# Load j into $t3 again
 
-	addi 	$sp, $sp, 12
+	addi 	$sp, $sp, 12			# Free stack
 
 	jr 	$ra				
 
 Partition:
 	addi 	$sp, $sp, -12
-
-	sw	$a1, 0($sp)
-	sw	$a2, 4($sp)
+	
+	sw	$a1, 0($sp)			# Store low
+	sw	$a2, 4($sp)			# Store High
 	sw	$ra, 8($sp)			# Return address
 
 	sll	$t0, $a2, 2			# $t0 = 4*high
@@ -379,18 +379,18 @@ Partition:
 
 	addi	$t4, $a2, -1			# $t4 = high - 1
 	ForLoop:
-		bgt	$t3, $t4, EndLoop
+		bgt	$t3, $t4, EndLoop	# If low >= high - 1, go to EndLoop
 		
-		sll	$t0, $t3, 2		# $t0 = 4*j
-		add	$t0, $a0, $t0		# $t0 is address of a[j]
-		lw	$t5, 0($t0)		# $t5 = a[j]
+		sll	$t0, $t3, 2		# $t0 = 4 * j
+		add	$t0, $a0, $t0		# $t0 is address of array[j]
+		lw	$t5, 0($t0)		# $t5 = array[j]
 
-		bge	$t5, $t1, EndForIf 	# If a[j] < pivot
+		bge	$t5, $t1, EndForIf 	# If array[j] < pivot
 
 		addi	$t2, $t2, 1		# i++
 
-		move	$a1, $t2
-		move 	$a2, $t3
+		move	$a1, $t2		# Move i to a1 to swap
+		move 	$a2, $t3		# Move j to a2 to swap
 		jal 	Swap	
 										
 		EndForIf:
@@ -398,14 +398,14 @@ Partition:
 			j	ForLoop
 
 	EndLoop:
-		lw	$a1, 0($sp)
-		lw	$a2, 4($sp)
+		lw	$a1, 0($sp)		# Load low back to $a1
+		lw	$a2, 4($sp)		# Load high back to $a2
 
 		addi 	$a1, $t2, 1		# $a1 = i++ = low
 
 		jal 	Swap
 
-		add	$v0, $0, $a1		# v0 = i 
+		add	$v0, $0, $a1		# $v0 = i 
 		
 		lw	$ra, 8($sp)		# Return address
 
@@ -425,7 +425,7 @@ QuickSort:
 	beq 	$t0, $0, EndIf			# If low >= high then jump to EndIf
 	
 	jal 	Partition
-	move 	$s3, $v0			# Pivot (?) Idk
+	move 	$s3, $v0			# Pivot
 	
 	lw	$a1, 4($sp)			# $a1 = low
 	addi 	$a2, $s3, -1			# $a2 = pi - 1
